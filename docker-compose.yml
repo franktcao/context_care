@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Common params between `dev` and `deploy`
+  deploy: &common
+    container_name: context_care_prod_inst
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 127.0.0.1:8877:5011
+    stdin_open: true # docker run -i
+    tty: true        # docker run -t
+    environment:
+      DEV: 'True'
+    # env_file: local.env
+    command: ["bash"]
+  dev:
+    <<: *common
+    container_name: context_care_dev_inst
+    volumes:
+      - .:/opt/app
+    ports:
+      - 127.0.0.1:8878:5011
