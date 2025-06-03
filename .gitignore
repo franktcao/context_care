@@ -5,3 +5,7 @@ data/*
 
 # OS Specific
 .DS_Store
+
+
+# Sensitive information
+.env
