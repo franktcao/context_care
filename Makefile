@@ -21,7 +21,7 @@ setup: pyproject.toml
 	@echo "=== Installing pre-commit hooks ==="
 	pre-commit install
 	@echo "=== Setup complete ==="
-	@echo "To use environemtn, run `source .venv/bin/activate`"
+	@echo "To use the environment, run `source .venv/bin/activate`"
 	#@echo "=== Adding kernel for jupyter/lab"
 	## $(PYTHON) -m ipykernel install --user --name=contraction
 

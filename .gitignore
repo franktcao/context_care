@@ -2,3 +2,6 @@
 __pycache__/
 
 data/*
+
+# OS Specific
+.DS_Store
