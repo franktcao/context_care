@@ -1,3 +1,5 @@
+import logging
+import traceback
 import requests
 import json
 from time import sleep
@@ -5,9 +7,18 @@ from time import sleep
 import streamlit as st
 from langchain_community.llms import Ollama
 from langchain_community.llms.ollama import OllamaEndpointNotFoundError
+from requests.exceptions import ConnectionError
 
 OLLAMA_SERVER_URL = "http://localhost:11434"
+# OLLAMA_SERVER_URL = "http://djiasjdo"
+# OLLAMA_SERVER_URL = "http://ollama:11434"
 # OLLAMA_SERVER_URL = "http://ollama-container:11434"
+# OLLAMA_SERVER_URL = "http://0.0.0.0:11434"
+
+MODEL_NAME = "tinyllama"
+# MODEL_NAME = "djisajdaid"
+
+llm = Ollama(model=MODEL_NAME, base_url=OLLAMA_SERVER_URL)
 
 
 # === Format page
@@ -49,6 +60,7 @@ for message in st.session_state.messages:
             content = message["content"]
             display_message = f"**{display_name}:** {content}"
             st.markdown(display_message)
+            # st.write_stream(display_message)
 
 user_message = st.chat_input("Write your message here!")
 if user_message:
@@ -61,11 +73,19 @@ if user_message:
             st.markdown(display_message)
         with st.spinner("Thinking..."):
             try:
-                model_name = "tinyllama"
-                llm = Ollama(model=model_name, base_url=OLLAMA_SERVER_URL)
                 response_content = llm.invoke(user_message)
+            except ConnectionError as e:
+                st.exception(
+                    f"Make sure Ollama container is running and `{OLLAMA_SERVER_URL=}` is correctly set."
+                )
+                st.stop()
             except OllamaEndpointNotFoundError as e:
                 response_content = "**ERROR!** Ollama endpoint is not found. Make sure to pull the model first!"
+                st.exception(response_content)
+                st.stop()
+            except Exception as e:
+                st.exception(f"Some other error. Please see exception message: {e}")
+                st.stop()
     st.session_state.messages.append({"role": "assistant", "content": response_content})
     st.rerun()
 
