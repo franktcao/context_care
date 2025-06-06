@@ -28,6 +28,9 @@ pre-commit = "^4.2.0"
 torch = "2.2.2"
 accelerate = "^1.7.0"
 dotenv = "^0.9.9"
+st-pages = "^1.0.1"
+langchain-ollama = "^0.3.3"
+faiss-cpu = "^1.11.0"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "*"

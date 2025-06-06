@@ -6,6 +6,8 @@ data/*
 # OS Specific
 .DS_Store
 
+# Data
+temp.pdf
 
 # Sensitive information
 .env

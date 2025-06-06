@@ -1,36 +1,21 @@
-import logging
-import traceback
-import requests
-import json
-from time import sleep
-
 import streamlit as st
-from langchain_community.llms import Ollama
-from langchain_community.llms.ollama import OllamaEndpointNotFoundError
-from requests.exceptions import ConnectionError
-
-OLLAMA_SERVER_URL = "http://localhost:11434"
-# OLLAMA_SERVER_URL = "http://djiasjdo"
-# OLLAMA_SERVER_URL = "http://ollama:11434"
-# OLLAMA_SERVER_URL = "http://ollama-container:11434"
-# OLLAMA_SERVER_URL = "http://0.0.0.0:11434"
-
-MODEL_NAME = "tinyllama"
-# MODEL_NAME = "djisajdaid"
-
-llm = Ollama(model=MODEL_NAME, base_url=OLLAMA_SERVER_URL)
-
+from st_pages import add_page_title, get_nav_from_toml
 
 # === Format page
 # Fill up space
+
 st.set_page_config(layout="wide")
+nav = get_nav_from_toml(".streamlit/pages.toml")
+pg = st.navigation(nav)
+add_page_title(pg)
+pg.run()
 # Remove whitespace from the top of the page and sidebar
 st.markdown(
     """
         <style>
                .block-container {
-                    padding-top: 1rem;
-                    padding-bottom: 1rem;
+                    padding-top: 2rem;
+                    padding-bottom: 0rem;
                     padding-left: 5rem;
                     padding-right: 5rem;
                 }
@@ -38,72 +23,3 @@ st.markdown(
         """,
     unsafe_allow_html=True,
 )
-
-
-st.title("ContextCare")
-st.write("*`Care` with the right **`Context`***")
-with st.sidebar:
-    uploaded = st.file_uploader("Upload document here", type=[".pdf"])
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-name = st.text_input("Name", placeholder="Enter your name here!")
-if name == "":
-    name = "User"
-
-container = st.container(height=530)
-for message in st.session_state.messages:
-    with container:
-        role = message["role"]
-        display_name = "ContextCare" if role == "assistant" else name
-        with st.chat_message(role):
-            content = message["content"]
-            display_message = f"**{display_name}:** {content}"
-            st.markdown(display_message)
-            # st.write_stream(display_message)
-
-user_message = st.chat_input("Write your message here!")
-if user_message:
-    role = "user"
-    st.session_state.messages.append({"role": role, "content": user_message})
-    with container:
-        with st.chat_message(role):
-            display_name = "ContextCare" if role == "assistant" else name
-            display_message = f"**{display_name}:** {user_message}"
-            st.markdown(display_message)
-        with st.spinner("Thinking..."):
-            try:
-                response_content = llm.invoke(user_message)
-            except ConnectionError as e:
-                st.exception(
-                    f"Make sure Ollama container is running and `{OLLAMA_SERVER_URL=}` is correctly set."
-                )
-                st.stop()
-            except OllamaEndpointNotFoundError as e:
-                response_content = "**ERROR!** Ollama endpoint is not found. Make sure to pull the model first!"
-                st.exception(response_content)
-                st.stop()
-            except Exception as e:
-                st.exception(f"Some other error. Please see exception message: {e}")
-                st.stop()
-    st.session_state.messages.append({"role": "assistant", "content": response_content})
-    st.rerun()
-
-    # st.error(response_content)
-    # st.session_state.messages.append(
-    #     {"role": "assistant", "content": "hi"}
-    # )
-    # st.rerun()
-    # url = f"{OLLAMA_SERVER_URL}/api/generate"
-    # headers = {
-    #     "Content-Type": "application/json"
-    # }
-
-    # data = {
-    #     "model": "tinyllama",
-    #     "prompt": user_message,
-    #     "stream": False
-    # }
-    # llm = Ollama(model="tinyllama", base_url=OLLAMA_SERVER_URL)
-    # response_content = llm.invoke(user_message)
-    # with st.spinner("Thinking..."):

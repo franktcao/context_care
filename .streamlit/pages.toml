@@ -1,0 +1,10 @@
+[[pages]]
+path = "pages/home.py"
+name = "ContextCare"
+icon = "🏠"
+
+[[pages]]
+# path = "other_pages/add_context.py"
+path = "pages/add_context.py"
+name = "Add Context"
+icon = ":books:"
