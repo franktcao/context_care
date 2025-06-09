@@ -1,27 +1,37 @@
+import os
 import logging
 from pathlib import Path
 import traceback
 import requests
 import json
-from time import sleep
 
+import ollama
 import streamlit as st
 from langchain_community.llms import Ollama
 from langchain_community.llms.ollama import OllamaEndpointNotFoundError
+from langchain_community.vectorstores import FAISS
 from requests.exceptions import ConnectionError
 from langchain.chains import RetrievalQA
 from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain import PromptTemplate
-
-# from langchain.vectorstores import FAISS
-from langchain_community.vectorstores import FAISS
+from dotenv import load_dotenv
 
 # OLLAMA_SERVER_URL = "http://0.0.0.0:11434"
-OLLAMA_SERVER_URL = "http://localhost:11434"
-DPATH_VECTORSTORE = Path.cwd() / "data" / "vectorstore"
-MODEL_NAME = "tinyllama"
+# OLLAMA_SERVER_URL = "http://localhost:11434"
 # OLLAMA_SERVER_URL = "http://ollama:11434"
 # OLLAMA_SERVER_URL = "http://ollama-container:11434"
+# MODEL_NAME = "tinyllama"
+# MODEL_NAME = "deepseek-r1"
+
+load_dotenv()
+OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
+DPATH_VECTORSTORE = Path.cwd() / "data" / "vectorstore"
+
+client = ollama.Client(host=OLLAMA_SERVER_URL)
+models = client.list()
+
+model = st.selectbox("Models", models, format_func=lambda x: x.model)
+MODEL_NAME = model.model
 
 with st.sidebar:
     st.write("# Config")
@@ -53,21 +63,26 @@ with st.sidebar:
         help="Vector store for retrieval of context from relevant documents.",
     )
 
-EMBEDDINGS = OllamaEmbeddings(model=embedding_model)
+EMBEDDINGS = OllamaEmbeddings(model=embedding_model, base_url=OLLAMA_SERVER_URL)
+
 VECTOR_STORE = FAISS.load_local(
     vector_store, embeddings=EMBEDDINGS, allow_dangerous_deserialization=True
 )
+retriever = VECTOR_STORE.as_retriever()
 # LLM = Ollama(model=MODEL_NAME, base_url=OLLAMA_SERVER_URL)
 LLM = ChatOllama(model=model_name, base_url=OLLAMA_SERVER_URL, temperature=temperature)
+# response_content = LLM.invoke("why is the sky blue?")
+# st.write(response_content)
 st.write("*`Care` with the right **`Context`***")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
+    st.session_state.message_id = 0
 if name == "":
     name = "User"
 
 container = st.container(height=530)
-for message in st.session_state.messages:
+for i_message, message in enumerate(st.session_state.messages):
     with container:
         role = message["role"]
         display_name = "ContextCare" if role == "assistant" else name
@@ -75,6 +90,9 @@ for message in st.session_state.messages:
             content = message["content"]
             display_message = f"**{display_name}:** {content}"
             st.markdown(display_message)
+            if role == "assistant":
+                st.write("*Did you find this response helpful?*")
+                feedback = st.feedback("faces", key=i_message)
 
 user_message = st.chat_input("Write your message here!")
 if user_message:
@@ -87,31 +105,33 @@ if user_message:
             st.markdown(display_message)
         with st.spinner("Thinking...", show_time=True):
             # TODO: Stream chat so users don't feel like they're waiting
+            retriever = VECTOR_STORE.as_retriever()
+            prompt_template = f"""You are a health expert and have \
+            thoroughly read the study in context. You are tasked with \
+            providing a helpful answer to a question that someone who has
+            a(n) {familiarity} level of familiarity of the study. However, \
+            if you don't know the answer, just say that you don't know. Please
+            be succinct.
+
+            Context: {{context}}
+            Question: {{question}}
+
+            Only return answers that are helpful below and nothing else.
+            Helpful answer:
+            """
+            prompt = PromptTemplate(
+                template=prompt_template, input_variables=["context", "question"]
+            )
+            chain = RetrievalQA.from_chain_type(
+                llm=LLM,
+                retriever=retriever,
+                return_source_documents=True,
+                chain_type_kwargs={"prompt": prompt},
+            )
+            # response_content = LLM.invoke(user_message)
+            # response_content = LLM.invoke(user_message).content
+
             try:
-                retriever = VECTOR_STORE.as_retriever()
-                prompt_template = f"""You are a health expert and have \
-                thoroughly read the study in context. You are tasked with \
-                providing a helpful answer to a question that someone who has
-                a(n) {familiarity} level of familiarity of the study. However, \
-                if you don't know the answer, just say that you don't know.
-
-                Context: {{context}}
-                Question: {{question}}
-
-                Only return answers that are helpful below and nothing else.
-                Helpful answer:
-                """
-                prompt = PromptTemplate(
-                    template=prompt_template, input_variables=["context", "question"]
-                )
-                chain = RetrievalQA.from_chain_type(
-                    llm=LLM,
-                    retriever=retriever,
-                    return_source_documents=True,
-                    chain_type_kwargs={"prompt": prompt},
-                )
-                # response_content = LLM.invoke(user_message)
-                # response_content = LLM.invoke(user_message).content
                 result = chain.invoke(user_message)
                 response_content = result["result"]
 
@@ -130,9 +150,9 @@ if user_message:
                 response_content = "**ERROR!** Ollama endpoint is not found. Make sure to pull the model first!"
                 st.exception(response_content)
                 st.stop()
-            except Exception as e:
-                st.exception(f"Some other error. Please see exception message: {e}")
-                st.stop()
+            # except Exception as e:
+            #     st.exception(f"Some other error. Please see exception message: {e}")
+            #     st.stop()
 
     st.session_state.messages.append(
         {
