@@ -4,7 +4,11 @@ name = "ContextCare"
 icon = "🏠"
 
 [[pages]]
-# path = "other_pages/add_context.py"
 path = "pages/add_context.py"
 name = "Add Context"
 icon = ":books:"
+
+[[pages]]
+path = "pages/metrics.py"
+name = "Metrics"
+icon = "📊"
