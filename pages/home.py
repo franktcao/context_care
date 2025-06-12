@@ -155,11 +155,10 @@ VECTOR_STORE = FAISS.load_local(
 LLM = ChatOllama(model=model_name, base_url=OLLAMA_SERVER_URL, temperature=temperature)
 
 
-st.write("*`Care` with the right **`Context`***")
+st.write("*Care with the right **Context**.*")
 
 # === Write out history of messsages
 df_history = st.session_state.df_history
-st.write(df_history)
 container = st.container(height=530)
 display_all_messages(container, df_history)
 

@@ -21,6 +21,9 @@ ollama:
 	docker build -t local_ollama src/ollama
 	docker run -d --name ollama-container --net carenet -p 11434:11434 local_ollama
 
+app:
+	streamlit run app.py
+
 clean:
 	rm -rf __pycache__
 	rm -rf $(VENV)
