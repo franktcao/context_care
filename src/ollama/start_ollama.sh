@@ -5,4 +5,4 @@ ollama serve &
 # Wait for Ollama to start
 sleep 5
 
-ollama run tinyllama
+ollama pull deepseek-r1:latest

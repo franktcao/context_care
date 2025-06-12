@@ -15,8 +15,6 @@ from langchain_community.llms import Ollama
 from langchain_ollama import OllamaEmbeddings
 from pydantic import BaseModel
 
-# from langchain_huggingface import HuggingFaceEmbeddings
-
 
 CHUNK_SIZE = 1024
 CHUNK_OVERLAP = 32
@@ -28,7 +26,6 @@ OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
 
 
 class VectorStoreConfig(BaseModel):
-    # model: OllamaEmbeddings
     chunk_size: int
     chunk_overlap: int
     fpath_pdf: str | Path
@@ -156,8 +153,5 @@ else:
         fpath_pdf=fpath_temp,
         fpath_vector_store=fpath_vector_store,
     )
-    # st.write(config.model_dump_json())
-    # st.write(EMBEDDINGS)
-    run = st.button("Submit", on_click=run_and_save, args=(EMBEDDINGS, config))
 
-    # st.stop()
+    run = st.button("Submit", on_click=run_and_save, args=(EMBEDDINGS, config))
