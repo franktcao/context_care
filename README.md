@@ -40,11 +40,14 @@ and logic that leads to the answer.
 ## Modules
 The web app has 3 modules.
 1. ContextCare (home): Main chatbot with configuration.
-    ![hi](assets/home.png)
-1. Add Context: Module to upload custom PDF to change context.
-    ![hi](assets/add_context.png)
+    ![Home](assets/home.png)
+
+1. Add Context: Upload custom PDF to change context.
+    ![Context](assets/add_context.png)
+
 1. Metrics: Display metrics to evaluate chatbot sessions.
-    ![hi](assets/metrics.png)
+    ![Metrics](assets/metrics.png)
+
 
 ##  Quickstart
 ### Prerequisites
