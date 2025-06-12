@@ -53,9 +53,9 @@ def display_metrics(df: pd.DataFrame) -> None:
     columns = st.columns(len(df))
     for i_col, (name, row) in enumerate(df.iterrows()):
         value = row["value"]
-        format = row["format"]
+        format_str = row["format"]
         with columns[i_col]:
-            st.metric(name, format.format(value))
+            st.metric(name, format_str.format(value))
 
 
 with st.sidebar:
@@ -94,10 +94,23 @@ with st.expander("Golden Set Metrics*"):
         """
     )
 
-
 st.divider()
+
 st.write("## Metrics by Session")
-for session_id, df_session in df.groupby("session_id"):
+metrics_by_session = (
+    df.groupby("session_id", group_keys=True)
+    .apply(lambda x: get_metrics(x, treat_null_feedback))
+    .reset_index()
+)
+
+columns = st.columns(metrics_by_session["metric"].nunique())
+for i_col, (metric_name, df_metric) in enumerate(metrics_by_session.groupby("metric")):
+    with columns[i_col]:
+        fig = px.histogram(
+            df_metric, x="metric", y="value", color="session_id", barmode="group"
+        )
+        st.plotly_chart(fig)
+
+for session_id, df_session in metrics_by_session.groupby("session_id"):
     st.write(f"### Session ID: `{session_id}`")
-    metrics = get_metrics(df_session, treat_null_feedback)
-    display_metrics(metrics)
+    display_metrics(df_session.set_index("metric"))
