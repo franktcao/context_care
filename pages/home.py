@@ -44,12 +44,8 @@ def update_record(
 ) -> pd.DataFrame:
     record = df.loc[record_id]
 
-    # with container:
-    #     st.write(updates)
     updated_record = record.to_dict() | updates | {"updated_at": dt.datetime.now()}
 
-    # with container:
-    #     st.write(updated_record)
     df.loc[record_id] = updated_record
 
     return df
@@ -63,7 +59,7 @@ def display_message(container, role: str, message: str) -> None:
 
 def display_all_messages(container, df: pd.DataFrame) -> None:
     # for i_row, row in df[:-1].iterrows():
-    for i_row, row in df.iterrows():
+    for _, row in df.iterrows():
         content = row["user_input"]
         message = f"**{name}:** {content}"
         display_message(container, role="user", message=message)
