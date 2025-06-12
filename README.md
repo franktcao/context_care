@@ -1,6 +1,5 @@
 # context_care
 
-
 # Answers to Questions
 1. 3 takeaways for this research are:
     1. Multiple knowledge bases and eletronic health record (EHR) systems are
@@ -28,7 +27,9 @@ of the answers provided by improving the retrieval of relevent snippets of the p
     of patient's background would help personalize the experience
     and provide
 
-# Choice for Base LLM
+# `ContextCare` Chatbot
+
+## Choice for Base LLM
 The base LLM for this chatbot was `deepseek-r1`. The choice was not just due to
 its hype and being light weight, but also it provides some insight into its
 "thinking" process. Within every response are `<think/>` tags that expose how
@@ -36,17 +37,18 @@ the LLM's reasoning, which includes interpretation of the question, citation
 of source material (especially important when using RAG with source documents),
 and logic that leads to the answer.
 
-# Modules
+## Modules
 The web app has 3 modules.
 1. Home: Main chatbot with configuration.
 1. Add Context: Module to upload custom PDF to change context.
 1. Metrics: Display metrics to evaluate chatbot sessions.
 
-# Prerequisites
+##  Quickstart
+### Prerequisites
 * python >=3.12<3.13
 * Docker
 
-# Quickstart
+### Steps
 1. Install dependencies:
     ```bash
     make
