@@ -18,11 +18,14 @@ setup: pyproject.toml
 	)
 
 ollama:
-	docker build -t local_ollama src/ollama
-	docker run -d --name ollama-container --net carenet -p 11434:11434 local_ollama
+	docker build -t ollama src/ollama
+	docker run -d -v data/ollama:/root/.ollama --name ollama --net carenet -p 11434:11434 ollama
 
 app:
-	streamlit run app.py
+	( \
+       . .venv/bin/activate; \
+		streamlit run app.py \
+	)
 
 clean:
 	rm -rf __pycache__
