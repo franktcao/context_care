@@ -113,6 +113,7 @@ with st.sidebar:
     st.write("# Upload")
     uploaded = st.file_uploader("Upload document here", type=[".pdf"])
 
+
 client = ollama.Client(host=OLLAMA_SERVER_URL)
 try:
     models_server = client.list()["models"]
@@ -154,4 +155,14 @@ else:
         fpath_vector_store=fpath_vector_store,
     )
 
-    run = st.button("Submit", on_click=run_and_save, args=(EMBEDDINGS, config))
+    with st.spinner("Constructing and saving vector store...", show_time=True):
+        run = st.button("Submit", on_click=run_and_save, args=(EMBEDDINGS, config))
+    if run:
+        st.info(
+            f"""
+            Success! Vector store has successfully been created and saved to `{fpath_vector_store}`.
+
+            Return to [ContextCare](/) and you will see it populated in the **Vector Store** options under **Config** section of the side bar!
+            """,
+            icon="⚠️",
+        )
