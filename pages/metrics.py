@@ -1,7 +1,9 @@
 from pathlib import Path
 from typing import Literal
+from langchain_community.utils.math import cosine_similarity
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 
@@ -15,9 +17,7 @@ def get_sessions() -> pd.DataFrame:
     return pd.concat(dfs)
 
 
-def get_metrics(
-    df: pd.DataFrame, feedback_filler: Literal[0, 1, None], beta: float = 1
-) -> pd.DataFrame:
+def get_metrics(df: pd.DataFrame, feedback_filler: Literal[0, 1, None]) -> pd.DataFrame:
     user_feedback = df["user_feedback"]
     total_feedback = len(df)
     if feedback_filler is None:
@@ -25,20 +25,21 @@ def get_metrics(
         positive_feedback = df["user_feedback"].sum()
     else:
         positive_feedback = user_feedback.fillna(feedback_filler).sum()
-    TP = 1
-    FN = 1
-    FP = 1
-    precision = TP / (TP + FP)
-    recall = TP / (TP + FN)
-    f_beta = (1 + beta**2) * precision * recall / (precision * beta**2 + recall)
-    accuracy = TP / (TP + FN + FP)
     metrics = [
         ("User satisfaction", positive_feedback / total_feedback, "{:.1%}"),
         ("Average response time (s)", df["response_time_sec"].mean(), "{:.2f}"),
-        ("Precision", precision, "{:.2f}"),
-        ("Recall", recall, "{:.2f}"),
-        (f"f_{beta}", f_beta, "{:.2f}"),
-        ("Accuracy", accuracy, "{:.2f}"),
+    ]
+
+    results = pd.DataFrame(metrics, columns=["metric", "value", "format"]).set_index(
+        "metric"
+    )
+
+    return results
+
+
+def get_golden_set_metrics() -> pd.DataFrame:
+    metrics = [
+        ("Gold Set Average Similarity*", 0.606, "{:.2f}"),
     ]
 
     results = pd.DataFrame(metrics, columns=["metric", "value", "format"]).set_index(
@@ -77,12 +78,25 @@ with st.expander("Sessions"):
 
 st.write("## Top Line Metrics")
 metrics = get_metrics(df, treat_null_feedback)
+golden_set_metrics = get_golden_set_metrics()
+metrics = pd.concat([metrics, golden_set_metrics], axis="rows")
 display_metrics(metrics)
+with st.expander("Golden Set Metrics*"):
+    st.write(
+        """
+        The golden set metrics are an evaluation of the LLM's performance on
+        questions where the answers are already known. Ideally there would be
+        *many* questions that are both relevant and irrelevant to the article
+        from subject matter experts.
+
+        Please see the notebook `notebooks/03_gold_set_eval.ipynb` for more
+        detail.
+        """
+    )
 
 
 st.divider()
 st.write("## Metrics by Session")
-# session_id = st.selectbox("Session ID", df["session_id"])
 for session_id, df_session in df.groupby("session_id"):
     st.write(f"### Session ID: `{session_id}`")
     metrics = get_metrics(df_session, treat_null_feedback)

@@ -4,7 +4,9 @@ import random
 import time
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
+import numpy as np
 import ollama
 import pandas as pd
 import pandera as pa
@@ -20,6 +22,9 @@ from requests.exceptions import ConnectionError
 
 
 load_dotenv()
+
+OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
+DPATH_VECTORSTORE = Path.cwd() / "data" / "vectorstore"
 
 
 def add_record(df: pd.DataFrame, row: pd.Series) -> pd.DataFrame:
@@ -76,42 +81,6 @@ def display_all_messages(container, df: pd.DataFrame) -> None:
         )
         display_message(container, role="assistant", message=message)
 
-        # st.markdown(display_message)
-        # with container:
-        #     with st.chat_message("user"):
-        #         display_name = name
-        #         content = row["user_input"]
-        #         display_message = f"**{display_name}:** {content}"
-        #         st.markdown(display_message)
-        # with st.chat_message("assistant"):
-        #     display_name = "ContextCare"
-        #     content = row["chatbot_output"]
-        #     display_message = f"**{display_name}:** {content}"
-        #     st.markdown(display_message)
-        # if role == "assistant":
-        #     st.write("*Did you find this response helpful?*")
-        #     feedback = st.feedback("faces", key=i_message)
-        #     if feedback:
-        #         # Write to history
-        #         pass
-
-
-# for i_message, message in st.session_state.df_history.iterrows():
-#     with container:
-#         role = message["role"]
-#         display_name = "ContextCare" if role == "assistant" else name
-#         with st.chat_message(role):
-#             content = message["content"]
-#             display_message = f"**{display_name}:** {content}"
-#             st.markdown(display_message)
-#             if role == "assistant":
-#                 st.write("*Did you find this response helpful?*")
-#                 feedback = st.feedback("faces", key=i_message)
-#                 if feedback:
-#                     # Write to history
-#                     pass
-OLLAMA_SERVER_URL = os.getenv("OLLAMA_SERVER_URL")
-DPATH_VECTORSTORE = Path.cwd() / "data" / "vectorstore"
 
 client = ollama.Client(host=OLLAMA_SERVER_URL)
 try:
@@ -144,7 +113,7 @@ schema = pa.DataFrameSchema(
 
 if "initialized" not in st.session_state:
     st.session_state.initialized = True
-    st.session_state.session_id = str(random.getrandbits(32))
+    st.session_state.session_id = str(uuid4())
     st.session_state.df_history = pd.DataFrame(columns=schema.dtypes.keys()).astype(
         {col: str(dtype) for col, dtype in schema.dtypes.items()}
     )
@@ -198,28 +167,10 @@ st.write(df_history)
 container = st.container(height=530)
 display_all_messages(container, df_history)
 
-# # === Write out last message
-# if len(df_history):
-#     row = df_history.iloc[-1]
-
-#     content = row["user_input"]
-#     message = f"**{name}:** {content}"
-#     display_message(container, role="user", message=message)
-
-#     content = row["chatbot_output"]
-#     message = f"**{name}:** {content}"
-#     display_message(container, role="assistant", message=message)
-#         # feedback = st.feedback(key=len(df_history))
-# # if feedback:
-# #     # Write to history
-# #     pass
-
 # === Write out new message
 updated = None
 user_message = st.chat_input("Write your message here!")
 if user_message:
-    # role =
-    # st.session_state.messages.append({"role": role, "content": user_message})
     message = f"**{name}:** {user_message}"
     display_message(container, role="user", message=message)
     time_start = dt.datetime.now()
@@ -253,26 +204,16 @@ if user_message:
             response_content = "**ERROR!** Ollama endpoint is not found. Make sure to pull the model first!"
             st.exception(response_content)
             st.stop()
-        response_content = "hello"
-        page = None
-        pages = None
-        context_pdf = None
-        # time.sleep(1.12321)
 
-        # st.write(result)
         top_source = result["source_documents"][0]
         response_content = result["result"]
         page = top_source.metadata.get("page") + 1  # Correct for 0-index
         pages = top_source.metadata.get("total_pages")
         context_pdf = Path(top_source.metadata.get("source")).name
-        # page = top_source.metadata.get("page") + 1  # Correct for 0-index
         snippet = top_source.page_content
         time_end = dt.datetime.now()
         display_message(container, role="assistant", message=response_content)
 
-    # st.write(time_end - time_start)
-    # st.write((time_end - time_start).total_seconds())
-    # st.write(type(time_end - time_start))
     record = {
         "user_input": user_message,
         "chatbot_output": response_content,
@@ -311,36 +252,4 @@ if len(df_history) > 0:
 # === Restart cache
 st.session_state.last_feedback = None
 
-# st.rerun()
-
-
-# n_rows = len(st.session_state.df_history)
-# st.session_state.df_history.loc[n_rows] = {
-#     "user_input": user_message,
-#     "chatbot_output": response_content,
-#     "user_feedback": feedback
-# }
-# st.write(st.session_state.df_history)
-
-
-# # # Reference information
-# # top_source = result["source_documents"][0]
-# # page = top_source.metadata.get("page") + 1  # Correct for 0-index
-# # pages = top_source.metadata.get("total_pages")
-# # snippet = top_source.page_content
-
-# st.session_state.messages.append(
-#     {
-#         "role": "assistant",
-#         "content": response_content
-#         + (
-#             ""
-#             if not page
-#             else f"""
-
-#     See page {page} of {pages}
-#     """
-#         ),
-#     }
-# )
 # st.rerun()
